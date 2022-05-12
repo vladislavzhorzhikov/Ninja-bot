@@ -1,19 +1,24 @@
 package main
 
 import (
-	"Ninja-bot/config"
-	"Ninja-bot/database"
-	"Ninja-bot/randoms"
 	"database/sql"
-	"github.com/Syfaro/telegram-bot-api"
-	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 	"log"
 	"math/rand"
 	"time"
+
+	"github.com/Syfaro/telegram-bot-api"
+	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
+
+	"Ninja-bot/boobs"
+	"Ninja-bot/config"
+	"Ninja-bot/database"
+	"Ninja-bot/randoms"
 )
 
-const dbDriverName = "postgres"
+const (
+	dbDriverName = "postgres"
+)
 
 func main() {
 	rand.Seed(time.Now().Unix())
@@ -57,7 +62,7 @@ func main() {
 				randomEmployee = append(randomEmployee, update.Message.From.UserName)
 			case "stop":
 				if randomEmployee != nil {
-					reply = random(randomEmployee, rnd)
+					reply = randoms.Random(randomEmployee, rnd)
 				}
 				isRandomEmployees = false
 				randomEmployee = nil
@@ -68,12 +73,19 @@ func main() {
 		case "start":
 			reply = "Привет. Я телеграм-бот что б вы не ебались с рандом оргом"
 		case "menu":
-			reply = "/random - зарандомить лоха на заказ еды \n/delivery - даже блять с едой определиться не можете...рандом доставки"
+			reply = "/random - зарандомить лоха на заказ еды \n/delivery - даже блять с едой определиться не можете...рандом доставки\n/boobs-сиськи!"
 		case "random":
 			reply = "Не хочешь ебаться с рандом оргом? Кто хочет кушать тыкает на /eat. Зарандомимся как мужики тут. Для завершения кликай /stop"
 			isRandomEmployees = true
 		case "delivery":
-			reply = randomDelivery()
+			reply = randoms.RandomDelivery()
+		case "boobs":
+			photo := tgbotapi.NewPhotoShare(update.Message.Chat.ID, boobs.RandomBoobs())
+			_, err := bot.Send(photo)
+			for err != nil {
+				photo := tgbotapi.NewPhotoShare(update.Message.Chat.ID, boobs.RandomBoobs())
+				_, err = bot.Send(photo)
+			}
 		}
 
 		if reply != "" {
@@ -81,34 +93,4 @@ func main() {
 			bot.Send(msg)
 		}
 	}
-}
-
-func random(randomEmployee []string, rnd *database.Randoms) string {
-	indPhr := rand.Intn(len(randoms.RandomPhrase))
-	s := "Заказывает @"
-	indEmpl := rand.Intn(len(randomEmployee))
-	randCount, err := rnd.IsPrevious(randomEmployee[indEmpl])
-	if err != nil {
-		if err.Error() != database.NotMatching {
-			errors.WithStack(err)
-		}
-		rnd.AddUserName(randomEmployee[indEmpl])
-	}
-
-	if randCount >= 3 {
-		randomEmployee = append(randomEmployee[:indEmpl], randomEmployee[indEmpl+1:]...)
-		if len(randomEmployee) == 0 {
-			return ""
-		}
-		indEmpl = rand.Intn(len(randomEmployee))
-	}
-
-	rnd.UpCount(randomEmployee[indEmpl], randCount+1)
-	return randoms.RandomPhrase[indPhr] + s + randomEmployee[indEmpl]
-}
-
-func randomDelivery() string {
-	indPhr := rand.Intn(len(randoms.RandomDeliveryPhrase))
-	indDlv := rand.Intn(len(randoms.RandomDelivery))
-	return randoms.RandomDeliveryPhrase[indPhr] + randoms.RandomDelivery[indDlv]
 }
