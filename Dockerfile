@@ -1,11 +1,12 @@
-FROM 192.168.0.8:5000/golang
+FROM golang:alpine
 
-EXPOSE 80
+WORKDIR /go/src/app
 
-WORKDIR /go/src/Ninja-bot
-COPY . .
-RUN chmod +x ./start.sh
+ADD . .
+RUN go mod init
 
-RUN go install -mod vendor
+RUN go build  -o /Ninja-bot
 
-ENTRYPOINT ./start.sh
+EXPOSE 6111
+
+CMD ["./Ninja-bot"]
