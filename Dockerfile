@@ -1,12 +1,11 @@
 FROM golang:alpine
 
-WORKDIR /go/src/app
+RUN mkdir /app
 
-ADD . .
-RUN go mod init
+COPY . /app
 
-RUN go build  -o /Ninja-bot
+WORKDIR /app
 
-EXPOSE 6111
+RUN go build -o bot .
 
-CMD ["./Ninja-bot"]
+CMD [ "/app/bot" ]
