@@ -20,6 +20,10 @@ const (
 	dbDriverName = "postgres"
 )
 
+var chatId = map[int64]struct{}{
+	-1001269173682: {}, //JS NINJA sente
+}
+
 func main() {
 	rand.Seed(time.Now().Unix())
 
@@ -55,11 +59,12 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
-
 		if isRandomEmployees {
 			switch update.Message.Command() {
 			case "eat":
-				randomEmployee = append(randomEmployee, update.Message.From.UserName)
+				if checkEmployee(randomEmployee, update) {
+					randomEmployee = append(randomEmployee, update.Message.From.UserName)
+				}
 			case "stop":
 				if randomEmployee != nil {
 					reply = randoms.Random(randomEmployee, rnd)
@@ -75,8 +80,10 @@ func main() {
 		case "menu":
 			reply = "/random - зарандомить лоха на заказ еды \n/delivery - даже блять с едой определиться не можете...рандом доставки\n/boobs-сиськи!"
 		case "random":
-			reply = "Не хочешь ебаться с рандом оргом? Кто хочет кушать тыкает на /eat. Зарандомимся как мужики тут. Для завершения кликай /stop"
-			isRandomEmployees = true
+			if _, ok := chatId[update.Message.Chat.ID]; ok {
+				reply = "Не хочешь ебаться с рандом оргом? Кто хочет кушать тыкает на /eat. Зарандомимся как мужики тут. Для завершения кликай /stop"
+				isRandomEmployees = true
+			}
 		case "delivery":
 			reply = randoms.RandomDelivery()
 		case "boobs":
@@ -93,4 +100,13 @@ func main() {
 			bot.Send(msg)
 		}
 	}
+}
+
+func checkEmployee(randomEmployee []string, update tgbotapi.Update) bool {
+	for _, empl := range randomEmployee {
+		if empl == update.Message.From.UserName {
+			return false
+		}
+	}
+	return true
 }
